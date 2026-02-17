@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Panel - Pet Monitoring System</title>
+  <link href="style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+  <div class="admin-page">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <div>
+          <h1 class="admin-title">Admin Panel</h1>
+          <p class="admin-subtitle" id="adminSubtitle">อนุมัติบัญชี / ปรับบทบาทผู้ใช้</p>
+        </div>
+        <div class="admin-header-actions">
+          <a class="admin-link" href="/index.html">← กลับไปหน้าแอป</a>
+          <button class="admin-btn secondary" id="logoutBtn" type="button">Logout</button>
+        </div>
+      </div>
+
+      <div class="admin-card-body">
+        <div id="adminAlert" class="admin-alert hidden"></div>
+
+        <div class="admin-toolbar">
+          <div class="admin-me" id="adminMeText">กำลังตรวจสอบสิทธิ์...</div>
+          <div class="admin-toolbar-actions">
+            <button class="admin-btn" id="reloadBtn" type="button">รีเฟรช</button>
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <h2 class="admin-section-title">Pending approvals</h2>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width:70px;">ID</th>
+                  <th>ชื่อ</th>
+                  <th>Email</th>
+                  <th style="width:120px;">Role</th>
+                  <th style="width:210px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pendingTbody">
+                <tr><td colspan="5" class="admin-muted">กำลังโหลด...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="admin-section">
+          <div class="admin-section-head">
+            <h2 class="admin-section-title">All users</h2>
+            <div class="admin-search">
+              <input id="userSearch" type="text" placeholder="ค้นหา (ชื่อ/อีเมล)..." />
+            </div>
+          </div>
+
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width:70px;">ID</th>
+                  <th>ชื่อ</th>
+                  <th>Email</th>
+                  <th style="width:110px;">Approved</th>
+                  <th style="width:120px;">Role</th>
+                  <th style="width:150px;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="usersTbody">
+                <tr><td colspan="6" class="admin-muted">กำลังโหลด...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+       
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

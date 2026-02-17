@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Pet Monitoring System</title>
+  <link href="style.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-card-header">
+        <h1 class="auth-title">Pet Monitoring System</h1>
+        <p class="auth-subtitle" id="authSubtitle">ลงชื่อเข้าใช้เพื่อใช้งานระบบ</p>
+      </div>
+
+      <div class="auth-card-body">
+        <!-- LOGIN -->
+        <form id="loginForm" class="auth-section">
+          <div class="auth-field">
+            <label for="loginEmail">Email</label>
+            <input id="loginEmail" type="email" autocomplete="email" required />
+          </div>
+          <div class="auth-field">
+            <label for="loginPassword">Password</label>
+            <input id="loginPassword" type="password" autocomplete="current-password" required />
+          </div>
+          <div class="auth-actions">
+            <button class="auth-btn" type="submit">ลงชื่อเข้าใช้</button>
+          </div>
+          <div class="auth-linkrow">
+            <button type="button" id="toRegisterBtn">ยังไม่มีบัญชี? สร้างบัญชี</button>
+            <button type="button" id="toForgotBtn">ลืมรหัสผ่าน</button>
+          </div>
+        </form>
+
+        <!-- REGISTER -->
+        <form id="registerForm" class="auth-section hidden">
+          <div class="auth-field">
+            <label for="regName">ชื่อผู้ใช้</label>
+            <input id="regName" type="text" autocomplete="name" required />
+          </div>
+          <div class="auth-field">
+            <label for="regEmail">Email</label>
+            <input id="regEmail" type="email" autocomplete="email" required />
+          </div>
+          <div class="auth-field">
+            <label for="regPassword">Password</label>
+            <input id="regPassword" type="password" autocomplete="new-password" required />
+          </div>
+          <div class="auth-actions">
+            <button class="auth-btn" type="submit">สร้างบัญชี (รออนุมัติ)</button>
+          </div>
+          <div class="auth-linkrow">
+            <button type="button" id="toLoginBtn1">กลับไปหน้า Login</button>
+          </div>
+        </form>
+
+        <!-- FORGOT -->
+        <form id="forgotForm" class="auth-section hidden">
+          <div class="auth-field">
+            <label for="forgotEmail">Email</label>
+            <input id="forgotEmail" type="email" autocomplete="email" required />
+          </div>
+          <div class="auth-actions">
+            <button class="auth-btn" type="submit">ส่งลิงก์รีเซ็ตรหัสผ่าน</button>
+          </div>
+          <div class="auth-linkrow">
+            <button type="button" id="toLoginBtn2">กลับไปหน้า Login</button>
+          </div>
+        </form>
+
+        <!-- RESET -->
+        <form id="resetForm" class="auth-section hidden">
+          <div class="auth-field">
+            <label>Email</label>
+            <input id="resetEmail" type="email" readonly />
+          </div>
+          <div class="auth-field">
+            <label for="resetPassword">รหัสผ่านใหม่</label>
+            <input id="resetPassword" type="password" autocomplete="new-password" required />
+          </div>
+          <div class="auth-actions">
+            <button class="auth-btn" type="submit">ตั้งรหัสผ่านใหม่</button>
+          </div>
+          <div class="auth-linkrow">
+            <button type="button" id="toLoginBtn3">กลับไปหน้า Login</button>
+          </div>
+        </form>
+
+        <div id="authAlert" class="auth-alert hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+</body>
+</html>
