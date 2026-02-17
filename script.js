@@ -50,21 +50,43 @@ async function logout() {
 
 
 // Refresh latest camera JPEG (bridge mode)
+// Use chained setTimeout (not setInterval) to avoid request pile-up when network is slow.
 let cameraImgRefreshTimer = null;
-function startCameraImgRefresh(intervalMs = 700) {
+function startCameraImgRefresh(intervalMs = 300) {
   if (cameraImgRefreshTimer) return;
-  cameraImgRefreshTimer = setInterval(() => {
+
+  const tick = () => {
     const img = document.getElementById("cameraImg");
-    if (!img) return;
+    if (!img) {
+      cameraImgRefreshTimer = setTimeout(tick, intervalMs);
+      return;
+    }
     const base = img.getAttribute("data-base");
-    if (!base) return;
-    // Cache-bust
-    img.src = `${base}?t=${Date.now()}`;
-  }, intervalMs);
+    if (!base) {
+      cameraImgRefreshTimer = setTimeout(tick, intervalMs);
+      return;
+    }
+
+    // Cache-bust every request
+    const nextSrc = `${base}?t=${Date.now()}`;
+
+    // Only schedule next refresh after current image finishes (prevents backlog)
+    const scheduleNext = () => {
+      img.onload = null;
+      img.onerror = null;
+      cameraImgRefreshTimer = setTimeout(tick, intervalMs);
+    };
+
+    img.onload = scheduleNext;
+    img.onerror = scheduleNext;
+    img.src = nextSrc;
+  };
+
+  cameraImgRefreshTimer = setTimeout(tick, intervalMs);
 }
 
 document.addEventListener('DOMContentLoaded', authGuard);
-document.addEventListener('DOMContentLoaded', () => startCameraImgRefresh(700));
+document.addEventListener('DOMContentLoaded', () => startCameraImgRefresh(300));
 
 // In case other scripts run before authGuard finishes, update once on load too.
 document.addEventListener('DOMContentLoaded', () => {

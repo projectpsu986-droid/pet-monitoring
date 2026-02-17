@@ -4094,8 +4094,10 @@ def camera_latest(room, idx):
     if not item:
         return jsonify({"ok": False, "error": "no_frame_yet"}), 404
     return Response(item["bytes"], mimetype="image/jpeg", headers={
-        "Cache-Control": "no-store, max-age=0",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
         "Pragma": "no-cache",
+        "Expires": "0",
+        "Surrogate-Control": "no-store",
     })
 
 @app.route("/api/camera/status", methods=["GET"])
