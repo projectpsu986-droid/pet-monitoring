@@ -152,8 +152,6 @@ CORS(app, supports_credentials=True)
 # push_subscriptions table exists. Therefore db_config/get_db must be
 # defined before the Web Push init code runs.
 db_config = {
-    # Default values are for local development.
-    # On Render, set these as environment variables.
     "host": os.environ.get("DB_HOST", "localhost"),
     "user": os.environ.get("DB_USER", "root"),
     "password": os.environ.get("DB_PASSWORD", "root"),
@@ -4034,25 +4032,83 @@ def start_scheduler():
 
 
 # Start automatic alert push worker at import-time (for gunicorn/uwsgi too).
-# IMPORTANT: If you run multiple Gunicorn workers, each worker process will start its own
-# background thread(s), which can cause duplicated work/notifications.
-# For Render, we recommend running a SINGLE worker (e.g. --workers 1) unless you refactor
-# the background workers into a separate process.
-if os.environ.get("START_BACKGROUND_WORKERS", "1") == "1":
+try:
+    _start_alert_push_worker()
+except Exception as e:  # pragma: no cover
     try:
-        _start_alert_push_worker()
-    except Exception as e:  # pragma: no cover
-        try:
-            app.logger.error(f"[PUSH WORKER] start error: {e}", exc_info=True)
-        except Exception:
-            pass
+        app.logger.error(f"[PUSH WORKER] start error: {e}", exc_info=True)
+    except Exception:
+        pass
+
+
+
+# ============================================================
+# Camera Bridge (LAN RTSP -> Push latest JPEG to Render)
+# - Home PC pushes frames to /api/camera/push/<room>/<idx>
+# - Web UI fetches latest at /camera_latest/<room>/<idx>.jpg
+# ============================================================
+
+_CAMERA_STORE = {}  # (room, idx) -> {"bytes": b"...", "ts": float}
+_CAMERA_LOCK = Lock()
+CAM_PUSH_TOKEN = os.environ.get("CAM_PUSH_TOKEN", "").strip()
+
+def _camera_key(room: str, idx: int):
+    room = (room or "").strip().lower()
+    return (room, int(idx))
+
+@app.route("/api/camera/push/<room>/<int:idx>", methods=["POST"])
+def camera_push(room, idx):
+    """Receive a single JPEG frame from a trusted local bridge."""
+    if not CAM_PUSH_TOKEN:
+        return jsonify({"ok": False, "error": "server_not_configured"}), 500
+
+    token = request.headers.get("X-CAM-TOKEN", "") or request.args.get("token", "")
+    if not token or not hmac.compare_digest(token, CAM_PUSH_TOKEN):
+        return jsonify({"ok": False, "error": "unauthorized"}), 401
+
+    # Accept multipart file: frame
+    f = request.files.get("frame")
+    if f is None:
+        return jsonify({"ok": False, "error": "missing_frame"}), 400
+
+    data = f.read()
+    if not data:
+        return jsonify({"ok": False, "error": "empty_frame"}), 400
+
+    # Basic sanity: JPEG should start with 0xFFD8
+    if not (len(data) > 4 and data[0:2] == b"\xff\xd8"):
+        # allow non-jpeg but still store to help debugging
+        pass
+
+    k = _camera_key(room, idx)
+    now = time_module.time()
+    with _CAMERA_LOCK:
+        _CAMERA_STORE[k] = {"bytes": data, "ts": now, "size": len(data)}
+    return jsonify({"ok": True, "room": k[0], "idx": k[1], "ts": now})
+
+@app.route("/camera_latest/<room>/<int:idx>.jpg", methods=["GET"])
+def camera_latest(room, idx):
+    k = _camera_key(room, idx)
+    with _CAMERA_LOCK:
+        item = _CAMERA_STORE.get(k)
+    if not item:
+        return jsonify({"ok": False, "error": "no_frame_yet"}), 404
+    return Response(item["bytes"], mimetype="image/jpeg", headers={
+        "Cache-Control": "no-store, max-age=0",
+        "Pragma": "no-cache",
+    })
+
+@app.route("/api/camera/status", methods=["GET"])
+def camera_status():
+    with _CAMERA_LOCK:
+        out = [
+            {"room": k[0], "idx": k[1], "last_ts": v.get("ts"), "bytes": v.get("size", 0)}
+            for k, v in _CAMERA_STORE.items()
+        ]
+    out.sort(key=lambda x: (x["room"], x["idx"]))
+    return jsonify({"ok": True, "cameras": out})
 
 
 if __name__ == "__main__":
-    # Local dev entrypoint. On Render, use Gunicorn (see Procfile / start command).
     start_scheduler()
-    app.run(
-        host="0.0.0.0",
-        port=int(os.environ.get("PORT", "5000")),
-        debug=os.environ.get("FLASK_DEBUG", "0") == "1",
-    )
+    app.run(debug=True, port=5000)

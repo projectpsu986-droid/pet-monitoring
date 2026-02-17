@@ -48,7 +48,23 @@ async function logout() {
   window.location.href = '/login.html';
 }
 
+
+// Refresh latest camera JPEG (bridge mode)
+let cameraImgRefreshTimer = null;
+function startCameraImgRefresh(intervalMs = 700) {
+  if (cameraImgRefreshTimer) return;
+  cameraImgRefreshTimer = setInterval(() => {
+    const img = document.getElementById("cameraImg");
+    if (!img) return;
+    const base = img.getAttribute("data-base");
+    if (!base) return;
+    // Cache-bust
+    img.src = `${base}?t=${Date.now()}`;
+  }, intervalMs);
+}
+
 document.addEventListener('DOMContentLoaded', authGuard);
+document.addEventListener('DOMContentLoaded', () => startCameraImgRefresh(700));
 
 // In case other scripts run before authGuard finishes, update once on load too.
 document.addEventListener('DOMContentLoaded', () => {
@@ -987,9 +1003,9 @@ function updateCameraUI() {
     ? `กล้อง ${currentCameraIndex + 1} จาก ${cams.length}`
     : `ไม่มีกล้องในห้องนี้`;
 
-  const feed = cam ? `${API_BASE}/video_feed/${room.name}/${cam.index}` : "";
+  const feed = cam ? `${API_BASE}/camera_latest/${room.name}/${cam.index}.jpg` : "";
   document.getElementById("cameraFeed").innerHTML = cam
-    ? `<img class="camera-img" src="${feed}" alt="${cam.label}">`
+    ? `<img id="cameraImg" class="camera-img" data-base="${feed}" src="${feed}?t=${Date.now()}" alt="${cam.label}">`
     : `<div class="simulated-video"><div class="camera-placeholder large">📹</div><p>ไม่มีกล้อง</p></div>`;
 
   const prevBtn = document.querySelector(".camera-controls .nav-btn:first-child");
